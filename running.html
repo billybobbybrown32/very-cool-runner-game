@@ -3,29 +3,90 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Stickman Runner Game</title>
+<title>Stickman Runner</title>
 <style>
-  /* Reset & base */
-  * {
-    box-sizing: border-box;
-  }
   body, html {
-    margin: 0; padding: 0;
-    height: 100%;
+    margin:0; padding:0; overflow:hidden;
+    font-family: Arial, sans-serif;
     background: linear-gradient(skyblue, green);
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    overflow: hidden;
-    user-select: none;
-    color: white;
   }
   #game {
     position: relative;
-    width: 100vw; height: 100vh;
+    width: 100vw;
+    height: 100vh;
     overflow: hidden;
   }
+  #player, #enemy, #obstacle {
+    position: absolute;
+    bottom: 0;
+  }
+  #player {
+    width: 50px; height: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+  #player.sliding {
+    height: 50px;
+    transition: height 0.3s ease;
+  }
+  #enemy {
+    width: 50px; height: 80px;
+    bottom: 0;
+  }
+  #obstacle {
+    width: 40px;
+    height: 40px;
+    background: gray;
+    border-radius: 10px;
+  }
+  #train {
+    position: absolute;
+    bottom: 0;
+    left: -300px;
+    width: 250px;
+    height: 60px;
+    background: #444;
+    border-radius: 10px;
+    display: none;
+    box-shadow: 0 0 10px #00f inset;
+  }
+  #train div {
+    width: 40px;
+    height: 40px;
+    background: #00f;
+    border-radius: 50%;
+    position: absolute;
+    bottom: 10px;
+  }
+  #train div:nth-child(1) { left: 20px; }
+  #train div:nth-child(2) { left: 70px; }
+  #train div:nth-child(3) { left: 120px; }
+  #train div:nth-child(4) { left: 170px; }
 
-  /* Start screen */
-  #startScreen {
+  #scoreDisplay {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    color: white;
+    font-weight: bold;
+    font-size: 18px;
+    text-shadow: 1px 1px 2px black;
+  }
+
+  #controls {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    background: rgba(0,0,0,0.5);
+    color: white;
+    padding: 10px;
+    border-radius: 8px;
+    font-family: sans-serif;
+    font-size: 14px;
+  }
+
+  /* Menu styles */
+  .menu {
     position: absolute;
     top:0; left:0; right:0; bottom:0;
     background: rgba(0,0,0,0.7);
@@ -33,319 +94,54 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    z-index: 10;
+    color: white;
+    font-size: 24px;
+    z-index: 1000;
   }
-  #startScreen h1 {
-    font-size: 3em;
-    margin-bottom: 0.5em;
-  }
-  #startScreen p {
-    margin-bottom: 1em;
-    font-size: 1.2em;
-  }
-  #startScreen button {
-    background: #28a745;
-    border:none;
-    color:white;
-    padding: 0.8em 2em;
-    font-size: 1.2em;
-    border-radius: 0.3em;
+  .menu button {
+    margin: 15px;
+    font-size: 20px;
+    padding: 10px 20px;
     cursor: pointer;
-  }
-  #startScreen button:hover {
-    background: #218838;
-  }
-
-  /* Player and enemy container */
-  #player, #enemy {
-    position: absolute;
-    bottom: 40px;
-    width: 50px;
-    height: 80px;
-  }
-  #player {
-    left: 80px;
-  }
-  #enemy {
-    left: -60px;
-    display: none;
-  }
-
-  /* Stickman SVG */
-  .stickman {
-    width: 50px;
-    height: 80px;
-  }
-
-  /* Obstacle */
-  #obstacle {
-    position: absolute;
-    bottom: 40px;
-    right: -50px;
-    width: 40px;
-    height: 60px;
-    background: #654321;
-    border-radius: 5px;
-    animation: moveObstacle 2.5s linear infinite;
-    z-index: 2;
-  }
-
-  @keyframes moveObstacle {
-    0% { right: -50px; }
-    100% { right: 110vw; }
-  }
-
-  /* Score & messages */
-  #score {
-    position: absolute;
-    top: 10px; left: 20px;
-    font-size: 1.5em;
-    font-weight: bold;
-    z-index: 5;
-    text-shadow: 0 0 5px black;
-  }
-  #highScore {
-    position: absolute;
-    top: 40px; left: 20px;
-    font-size: 1.1em;
-    opacity: 0.8;
-    text-shadow: 0 0 3px black;
-  }
-  #message {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 3em;
-    font-weight: bold;
-    text-shadow: 0 0 10px black;
-    pointer-events: none;
-  }
-
-  /* Controls */
-  #controls {
-    position: absolute;
-    top: 10px;
-    right: 20px;
-    display: flex;
-    gap: 10px;
-    z-index: 5;
-  }
-  button.control-btn {
-    background: #222;
     border: none;
-    padding: 8px 12px;
-    color: white;
-    font-size: 1em;
-    border-radius: 5px;
-    cursor: pointer;
-  }
-  button.control-btn:hover {
-    background: #444;
-  }
-
-  /* Background selector and file upload */
-  #backgroundSelector, #fileUpload {
-    position: absolute;
-    bottom: 10px;
-    left: 20px;
-    font-size: 1em;
-    padding: 5px;
-    border-radius: 5px;
-  }
-  #fileUpload {
-    display: none;
-  }
-
-  /* Rainbow background animation */
-  @keyframes rainbowBG {
-    0%{background-position:0% 50%}
-    50%{background-position:100% 50%}
-    100%{background-position:0% 50%}
-  }
-
-  /* Power-up bar */
-  #powerupBar {
-    position: absolute;
-    top: 90px; left: 20px;
-    width: 150px;
-    height: 15px;
-    border: 2px solid white;
-    border-radius: 7px;
-    overflow: hidden;
-    background: rgba(255,255,255,0.2);
-    display: none;
-  }
-  #powerupFill {
-    height: 100%;
-    background: gold;
-    width: 0%;
-    transition: width 0.2s;
-  }
-
-  /* Link container */
-  #links {
-    position: absolute;
-    bottom: 10px;
-    right: 20px;
-    display: flex;
-    gap: 15px;
-    align-items: center;
-    z-index: 10;
-  }
-  #links a {
-    color: white;
-    text-decoration: none;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-weight: bold;
-    font-size: 0.9em;
-  }
-  #links a svg {
-    fill: white;
-    width: 22px;
-    height: 22px;
-  }
-  #links a:hover svg {
-    fill: #28a745;
-  }
-  /* Tooltip for Discord users */
-  .hover-user {
-    position: relative;
-  }
-  .hover-user[data-tooltip]:hover::after {
-    content: attr(data-tooltip);
-    position: absolute;
-    bottom: 130%;
-    left: 50%;
-    transform: translateX(-50%);
-    background: black;
-    padding: 3px 6px;
-    border-radius: 4px;
-    white-space: nowrap;
-    font-size: 0.8em;
-    opacity: 0.8;
-    pointer-events: none;
-    z-index: 20;
-  }
-
-  /* Stickman selection */
-  #stickmanSelector {
-    position: absolute;
-    bottom: 10px;
-    left: 220px;
-    z-index: 10;
-    background: rgba(0,0,0,0.5);
-    border-radius: 8px;
-    padding: 6px 10px;
-    display: flex;
-    gap: 10px;
-  }
-  .stickman-option {
-    cursor: pointer;
-    border: 2px solid transparent;
     border-radius: 6px;
-    padding: 3px;
-    transition: border-color 0.3s;
+    background: #222;
+    color: white;
+    transition: background 0.3s;
   }
-  .stickman-option.selected {
-    border-color: gold;
+  .menu button:hover {
+    background: #555;
   }
 </style>
 </head>
 <body>
+  <div id="game">
+    <div id="player"></div>
+    <div id="enemy"></div>
+    <div id="obstacle"></div>
+    <div id="train">
+      <div></div><div></div><div></div><div></div>
+    </div>
+    <div id="scoreDisplay"></div>
+    <div id="controls">
+      <b>Controls:</b> Left &rarr; Move Left | Right &rarr; Move Right | Up / Space &rarr; Jump | Down &rarr; Slide<br>
+      <small>Press 'P' to Pause/Resume</small>
+    </div>
 
-<div id="game">
+    <!-- Start menu -->
+    <div id="startMenu" class="menu">
+      <div>Stickman Runner</div>
+      <button id="startBtn">Start Game</button>
+    </div>
 
-  <!-- Start screen -->
-  <div id="startScreen">
-    <h1>Stickman Runner</h1>
-    <p>Press SPACE to jump. Avoid obstacles and the enemy!</p>
-    <button id="startBtn">Start Game</button>
+    <!-- Pause menu -->
+    <div id="pauseMenu" class="menu" style="display:none;">
+      <div>Game Paused</div>
+      <button id="resumeBtn">Resume</button>
+      <button id="restartBtn">Restart</button>
+      <button id="quitBtn">Quit</button>
+    </div>
   </div>
-
-  <!-- Player -->
-  <div id="player" class="stickman"></div>
-
-  <!-- Enemy -->
-  <div id="enemy" class="stickman"></div>
-
-  <!-- Obstacle -->
-  <div id="obstacle"></div>
-
-  <!-- Score -->
-  <div id="score">Score: 0</div>
-  <div id="highScore"></div>
-
-  <!-- Powerup Bar -->
-  <div id="powerupBar"><div id="powerupFill"></div></div>
-
-  <!-- Messages -->
-  <div id="message"></div>
-
-  <!-- Controls -->
-  <div id="controls">
-    <button id="pauseBtn" class="control-btn">Pause</button>
-    <button id="restartBtn" class="control-btn">Restart</button>
-  </div>
-
-  <!-- Background selector -->
-  <select id="backgroundSelector" title="Select background">
-    <option value="default">Default</option>
-    <option value="rainbow">Rainbow</option>
-    <option value="dark">Dark Mode</option>
-    <option value="picture">Picture URL</option>
-    <option value="upload">Upload Image</option>
-  </select>
-
-  <input type="file" id="fileUpload" accept="image/*" />
-
-  <!-- Stickman selector -->
-  <div id="stickmanSelector" title="Select your stickman">
-    <!-- Will be filled by JS -->
-  </div>
-
-  <!-- Links -->
-  <div id="links" aria-label="Social and developer links">
-    <a href="https://www.youtube.com/channel/UChpNbCvMs7-yOIY2mH_pnw" target="_blank" aria-label="YouTube Channel">
-      <svg viewBox="0 0 24 24" fill="currentColor" >
-        <path d="M10 15l5.19-3L10 9v6zM21.8 7.08a2.64 2.64 0 00-1.86-1.86C18.06 5 12 5 12 5s-6.06 0-7.94.22a2.64 2.64 0 00-1.86 1.86A27.4 27.4 0 002 12a27.4 27.4 0 00.2 4.92 2.64 2.64 0 001.86 1.86C5.94 19 12 19 12 19s6.06 0 7.94-.22a2.64 2.64 0 001.86-1.86A27.4 27.4 0 0022 12a27.4 27.4 0 00-.2-4.92z"/>
-      </svg> YouTube
-    </a>
-    <a href="https://github.com/billybobbybrown32" target="_blank" aria-label="GitHub">
-      <svg viewBox="0 0 24 24" fill="currentColor" >
-        <path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.112.82-.258.82-.577v-2.23c-3.338.727-4.042-1.415-4.042-1.415-.546-1.386-1.333-1.754-1.333-1.754-1.09-.745.083-.729.083-.729 1.205.084 1.84 1.236 1.84 1.236 1.07 1.835 2.807 1.305 3.492.997.108-.775.418-1.305.76-1.605-2.665-.305-5.466-1.33-5.466-5.93 0-1.31.47-2.38 1.235-3.22-.125-.303-.535-1.527.115-3.176 0 0 1.005-.322 3.3 1.23.957-.266 1.98-.398 3-.404 1.02.006 2.04.138 3 .404 2.28-1.552 3.285-1.23 3.285-1.23.655 1.65.245 2.873.12 3.176.77.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.62-5.475 5.92.43.37.82 1.102.82 2.222v3.293c0 .315.21.694.825.576C20.565 21.795 24 17.298 24 12c0-6.63-5.37-12-12-12z"/>
-      </svg> GitHub
-    </a>
-    <a href="https://discord.gg/DNc5eRDqvT" target="_blank" aria-label="Discord Server">
-      <svg viewBox="0 0 24 24" fill="currentColor" >
-        <path d="M20.317 4.3698a19.791 19.791 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561 19.9 19.9 0 006.0428 3.0294.0777.0777 0 00.0842-.0276c.4666-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057 13.13 13.13 0 01-1.872-.8884.077.077 0 01-.0076-.1277c.125-.0943.25-.1923.371-.2914a.0743.0743 0 01.0786-.0105c3.927 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0795.0095c.12.099.246.198.372.2924a.0766.0766 0 01-.006.1276 12.437 12.437 0 01-1.873.8883.0766.0766 0 00-.0407.1067c.3604.698.7668 1.3628 1.233 1.9932a.076.076 0 00.0842.0286 19.876 19.876 0 006.041-3.029 19.889 19.889 0 00-1.4906-13.6604.061.061 0 00-.0302-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9554 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1758 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189z"/>
-      </svg> Discord Server
-    </a>
-    <a href="https://discord.com/users/1353769342717792318" target="_blank" class="hover-user" data-tooltip="der is on yerba" aria-label="Discord User 1">
-      <svg viewBox="0 0 24 24" fill="currentColor" >
-        <path d="M12 12c2.21 0 4-1.79 4-4S14.21 4 12 4 8 5.79 8 8s1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-      </svg> User1
-    </a>
-    <a href="https://discord.com/users/1375478527717015695" target="_blank" class="hover-user" data-tooltip="scaredofhoes" aria-label="Discord User 2">
-      <svg viewBox="0 0 24 24" fill="currentColor" >
-        <path d="M12 12c2.21 0 4-1.79 4-4S14.21 4 12 4 8 5.79 8 8s1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-      </svg> User2
-    </a>
-    <a href="#" title="Developers" aria-label="Developers">
-      <svg viewBox="0 0 24 24" fill="currentColor" style="width:24px;height:24px;">
-        <path d="M20.7 4.3l-1-1a1 1 0 00-1.4 0l-1.3 1.3-1.6-1.6-4.3 4.3 1.6 1.6-1.3 1.3a1 1 0 000 1.4l1 1a1 1 0 001.4 0l1.3-1.3 4.3 4.3 1.6-1.6-4.3-4.3 1.3-1.3a1 1 0 000-1.4zM6 19v3h3l11-11-3-3L6 19z"/>
-      </svg> Devs
-    </a>
-  </div>
-</div>
-
-<!-- Audio -->
-<audio id="bgMusic" loop src="https://cdn.pixabay.com/download/audio/2022/03/20/audio_7d5f1d6c0d.mp3?filename=retro-game-loop-11025.mp3"></audio>
-<audio id="jumpSound" src="https://freesound.org/data/previews/331/331912_3248244-lq.mp3"></audio>
-<audio id="hitSound" src="https://freesound.org/data/previews/174/174027_3248244-lq.mp3"></audio>
-<audio id="scoreSound" src="https://freesound.org/data/previews/331/331912_3248244-lq.mp3"></audio>
 
 <script>
 (() => {
@@ -353,342 +149,299 @@
   const player = document.getElementById('player');
   const enemy = document.getElementById('enemy');
   const obstacle = document.getElementById('obstacle');
-  const scoreDisplay = document.getElementById('score');
-  const highScoreDisplay = document.getElementById('highScore');
-  const message = document.getElementById('message');
-  const startScreen = document.getElementById('startScreen');
+  const train = document.getElementById('train');
+  const scoreDisplay = document.getElementById('scoreDisplay');
+  const controls = document.getElementById('controls');
+
+  const startMenu = document.getElementById('startMenu');
+  const pauseMenu = document.getElementById('pauseMenu');
   const startBtn = document.getElementById('startBtn');
-  const pauseBtn = document.getElementById('pauseBtn');
+  const resumeBtn = document.getElementById('resumeBtn');
   const restartBtn = document.getElementById('restartBtn');
-  const backgroundSelector = document.getElementById('backgroundSelector');
-  const fileUpload = document.getElementById('fileUpload');
-  const powerupBar = document.getElementById('powerupBar');
-  const powerupFill = document.getElementById('powerupFill');
-  const stickmanSelector = document.getElementById('stickmanSelector');
+  const quitBtn = document.getElementById('quitBtn');
 
-  const bgMusic = document.getElementById('bgMusic');
-  const jumpSound = document.getElementById('jumpSound');
-  const hitSound = document.getElementById('hitSound');
-  const scoreSound = document.getElementById('scoreSound');
-
-  // Game variables
-  let isRunning = false;
-  let isPaused = false;
+  // Game vars
   let score = 0;
-  let highScore = localStorage.getItem('highScore') || 0;
-  let speed = 5; // obstacle speed (higher = faster)
-  let jumpHeight = 150;
-  let gravity = 6;
-  let isJumping = false;
-  let jumpY = 0;
-  let jumpVelocity = 0;
-  let enemyX = -60;
-  let obstacleX = window.innerWidth + 40;
+  let level = 1;
+  let speed = 5;
   let obstacleSpeed = speed;
   let enemySpeed = speed * 0.8;
-  let powerupActive = false;
-  let powerupDuration = 5000;
-  let powerupTimer = 0;
-  let invincible = false;
-  let level = 1;
-  let backgroundType = 'default';
-  let backgrounds = {
-    default: 'linear-gradient(skyblue, green)',
-    rainbow: 'linear-gradient(270deg, red, orange, yellow, green, blue, indigo, violet)',
-    dark: 'linear-gradient(#121212, #2c2c2c)',
-  };
+  let trainSpeed = speed * 1.2;
+  let enemyX = -60;
+  let obstacleX = window.innerWidth + 40;
+  let trainX = window.innerWidth + 200;
+  let trainActive = false;
 
-  // Stickman SVG templates
-  const stickmen = [
-    {
-      name: 'Classic',
-      svg: `<svg class="stickman" viewBox="0 0 50 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="25" cy="15" r="10" stroke="black" stroke-width="3" fill="none"/>
-        <line x1="25" y1="25" x2="25" y2="55" stroke="black" stroke-width="3"/>
-        <line x1="25" y1="30" x2="10" y2="50" stroke="black" stroke-width="3"/>
-        <line x1="25" y1="30" x2="40" y2="50" stroke="black" stroke-width="3"/>
-        <line x1="25" y1="55" x2="10" y2="75" stroke="black" stroke-width="3"/>
-        <line x1="25" y1="55" x2="40" y2="75" stroke="black" stroke-width="3"/>
-      </svg>`
-    },
-    {
-      name: 'Blue',
-      svg: `<svg class="stickman" viewBox="0 0 50 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="25" cy="15" r="10" stroke="blue" stroke-width="3" fill="none"/>
-        <line x1="25" y1="25" x2="25" y2="55" stroke="blue" stroke-width="3"/>
-        <line x1="25" y1="30" x2="10" y2="50" stroke="blue" stroke-width="3"/>
-        <line x1="25" y1="30" x2="40" y2="50" stroke="blue" stroke-width="3"/>
-        <line x1="25" y1="55" x2="10" y2="75" stroke="blue" stroke-width="3"/>
-        <line x1="25" y1="55" x2="40" y2="75" stroke="blue" stroke-width="3"/>
-      </svg>`
-    },
-    {
-      name: 'Green',
-      svg: `<svg class="stickman" viewBox="0 0 50 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="25" cy="15" r="10" stroke="green" stroke-width="3" fill="none"/>
-        <line x1="25" y1="25" x2="25" y2="55" stroke="green" stroke-width="3"/>
-        <line x1="25" y1="30" x2="10" y2="50" stroke="green" stroke-width="3"/>
-        <line x1="25" y1="30" x2="40" y2="50" stroke="green" stroke-width="3"/>
-        <line x1="25" y1="55" x2="10" y2="75" stroke="green" stroke-width="3"/>
-        <line x1="25" y1="55" x2="40" y2="75" stroke="green" stroke-width="3"/>
-      </svg>`
-    },
-  ];
+  // Player state
+  let isJumping = false;
+  let jumpY = 0;
+  let jumpHeight = 20;
+  let jumpVelocity = 0;
+  let gravity = 1;
+  let isSliding = false;
+  let playerLane = 1; // 0 left, 1 center, 2 right
+  const lanes = [window.innerWidth/2 - 100, window.innerWidth/2, window.innerWidth/2 + 100];
 
-  let currentStickmanIndex = 0;
+  // Game control
+  let isRunning = false;
+  let isPaused = false;
+  let animationId = null;
 
-  // Render stickman SVG inside player and enemy containers
-  function renderStickman(container, index, isEnemy = false) {
-    container.innerHTML = stickmen[index].svg;
-    if (isEnemy) {
-      // Make enemy red stickman by changing stroke to red in SVG
-      container.querySelectorAll('circle, line').forEach(el => el.setAttribute('stroke', 'red'));
-      container.style.display = 'block';
-    }
+  // Stickman rendering simplified: black player, red enemy
+  player.innerHTML = `
+  <svg viewBox="0 0 50 80" width="50" height="80" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="25" cy="15" r="10" stroke="black" stroke-width="2" fill="none"/>
+    <line x1="25" y1="25" x2="25" y2="50" stroke="black" stroke-width="2"/>
+    <line x1="25" y1="30" x2="5" y2="45" stroke="black" stroke-width="2"/>
+    <line x1="25" y1="30" x2="45" y2="45" stroke="black" stroke-width="2"/>
+    <line x1="25" y1="50" x2="5" y2="75" stroke="black" stroke-width="2"/>
+    <line x1="25" y1="50" x2="45" y2="75" stroke="black" stroke-width="2"/>
+  </svg>
+  `;
+  enemy.innerHTML = `
+  <svg viewBox="0 0 50 80" width="50" height="80" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="25" cy="15" r="10" stroke="red" stroke-width="2" fill="none"/>
+    <line x1="25" y1="25" x2="25" y2="50" stroke="red" stroke-width="2"/>
+    <line x1="25" y1="30" x2="5" y2="45" stroke="red" stroke-width="2"/>
+    <line x1="25" y1="30" x2="45" y2="45" stroke="red" stroke-width="2"/>
+    <line x1="25" y1="50" x2="5" y2="75" stroke="red" stroke-width="2"/>
+    <line x1="25" y1="50" x2="45" y2="75" stroke="red" stroke-width="2"/>
+  </svg>
+  `;
+
+  // Positions reset
+  function resetPositions() {
+    enemyX = -60;
+    obstacleX = window.innerWidth + 40;
+    trainX = window.innerWidth + 200;
+    trainActive = false;
+    playerLane = 1;
+    player.style.left = lanes[playerLane] + 'px';
+    player.style.bottom = '0px';
+    jumpY = 0;
+    isJumping = false;
+    isSliding = false;
   }
 
-  // Stickman selector UI
-  function populateStickmanSelector() {
-    stickmen.forEach((sm, i) => {
-      const div = document.createElement('div');
-      div.classList.add('stickman-option');
-      if(i === currentStickmanIndex) div.classList.add('selected');
-      div.innerHTML = sm.svg;
-      div.title = sm.name;
-      div.style.width = '40px';
-      div.style.height = '65px';
-      div.style.cursor = 'pointer';
-      div.addEventListener('click', () => {
-        currentStickmanIndex = i;
-        updatePlayerStickman();
-        document.querySelectorAll('.stickman-option').forEach(el => el.classList.remove('selected'));
-        div.classList.add('selected');
-      });
-      stickmanSelector.appendChild(div);
-    });
+  function updateScoreDisplay() {
+    scoreDisplay.textContent = `Score: ${score}  Level: ${level}`;
   }
 
-  function updatePlayerStickman() {
-    renderStickman(player, currentStickmanIndex);
+  // Collision helper
+  function collides(x1, w1, x2, w2) {
+    return (x1 < x2 + w2) && (x1 + w1 > x2);
   }
 
-  // Initial render
-  updatePlayerStickman();
-  renderStickman(enemy, 0, true);
-  populateStickmanSelector();
-
-  // Background handling
-  function updateBackground() {
-    if (backgroundType === 'picture' && bgPictureUrl) {
-      game.style.background = `url(${bgPictureUrl}) center center / cover no-repeat`;
-    } else if (backgroundType === 'upload' && uploadedImage) {
-      game.style.background = `url(${uploadedImage}) center center / cover no-repeat`;
-    } else if (backgroundType === 'rainbow') {
-      game.style.background = 'linear-gradient(270deg, red, orange, yellow, green, blue, indigo, violet)';
-      game.style.backgroundSize = '1400% 1400%';
-      game.style.animation = 'rainbowBG 15s ease infinite';
-    } else if (backgroundType === 'dark') {
-      game.style.background = 'linear-gradient(#121212, #2c2c2c)';
-      game.style.animation = 'none';
-    } else {
-      game.style.background = backgrounds.default;
-      game.style.animation = 'none';
-    }
+  // Game over
+  function gameOver() {
+    isRunning = false;
+    cancelAnimationFrame(animationId);
+    pauseMenu.style.display = 'flex';
+    pauseMenu.querySelector('div').textContent = "Game Over!";
+    // Enemy "beats" animation simplified
+    let beatCount = 0;
+    let beatInterval = setInterval(() => {
+      if (beatCount >= 6) {
+        clearInterval(beatInterval);
+        return;
+      }
+      enemy.style.transform = beatCount % 2 === 0 ? 'translateX(10px) rotate(10deg)' : 'translateX(-10px) rotate(-10deg)';
+      beatCount++;
+    }, 300);
   }
-
-  // Other game logic (jump, movement, collision, scoring) omitted for brevity...
-
-  // Start button event
-  startBtn.addEventListener('click', () => {
-    if (!isRunning) {
-      startGame();
-    }
-  });
-
-  // Pause button event
-  pauseBtn.addEventListener('click', () => {
-    if (isRunning) {
-      isPaused = !isPaused;
-      pauseBtn.textContent = isPaused ? 'Resume' : 'Pause';
-      if (!isPaused) gameLoop();
-    }
-  });
-
-  // Restart button event
-  restartBtn.addEventListener('click', () => {
-    resetGame();
-    startGame();
-  });
-
-  // Key controls for jump
-  document.addEventListener('keydown', (e) => {
-    if ((e.code === 'Space' || e.code === 'ArrowUp') && !isJumping && !isPaused) {
-      jumpSound.play();
-      isJumping = true;
-      jumpVelocity = jumpHeight;
-    }
-  });
 
   // Game loop
   function gameLoop() {
     if (!isRunning || isPaused) return;
 
-    // Update obstacle and enemy positions
-    obstacleX -= obstacleSpeed;
     enemyX += enemySpeed;
+    if (enemyX > window.innerWidth + 60) enemyX = -60;
+    enemy.style.left = enemyX + 'px';
 
+    obstacleX -= obstacleSpeed;
     if (obstacleX < -40) {
-      obstacleX = window.innerWidth + Math.random() * 500;
+      obstacleX = window.innerWidth + 40;
       score++;
-      scoreSound.play();
       if (score % 10 === 0) {
-        speed += 1;
+        level++;
+        speed += 0.5;
         obstacleSpeed = speed;
         enemySpeed = speed * 0.8;
-        level++;
+        trainSpeed = speed * 1.2;
+      }
+      if (score % 15 === 0) {
+        trainActive = true;
+        train.style.display = 'block';
+        trainX = window.innerWidth + 200;
+      }
+    }
+    obstacle.style.left = obstacleX + 'px';
+
+    if (trainActive) {
+      trainX -= trainSpeed;
+      train.style.left = trainX + 'px';
+      if (trainX < -300) {
+        trainActive = false;
+        train.style.display = 'none';
       }
     }
 
-    if (enemyX > window.innerWidth + 60) {
-      enemyX = -60;
-    }
-
-    obstacle.style.left = obstacleX + 'px';
-    enemy.style.left = enemyX + 'px';
-
-    // Handle jump
+    // Jump physics
     if (isJumping) {
       jumpY += jumpVelocity;
       jumpVelocity -= gravity;
       if (jumpY <= 0) {
         jumpY = 0;
         isJumping = false;
+        player.style.bottom = '0px';
+      } else {
+        player.style.bottom = jumpY + 'px';
       }
-      player.style.bottom = jumpY + 'px';
+    }
+
+    // Sliding style
+    if (isSliding) {
+      player.classList.add('sliding');
+    } else {
+      player.classList.remove('sliding');
     }
 
     // Collision detection
-    const playerRect = player.getBoundingClientRect();
-    const enemyRect = enemy.getBoundingClientRect();
-    const obstacleRect = obstacle.getBoundingClientRect();
+    const playerLeft = lanes[playerLane];
+    const playerBottom = jumpY;
+    const playerHeight = isSliding ? 50 : 80;
+    const playerWidth = 50;
 
-    if (!invincible && (
-      (playerRect.left < enemyRect.right &&
-       playerRect.right > enemyRect.left &&
-       playerRect.bottom > enemyRect.top &&
-       playerRect.top < enemyRect.bottom) ||
-      (playerRect.left < obstacleRect.right &&
-       playerRect.right > obstacleRect.left &&
-       playerRect.bottom > obstacleRect.top &&
-       playerRect.top < obstacleRect.bottom)
-    )) {
-      hitSound.play();
-      endGame();
+    // Obstacle collision (if not jumping or sliding)
+    if (!isJumping && !isSliding && collides(obstacleX, 40, playerLeft, playerWidth)) {
+      gameOver();
       return;
     }
 
-    scoreDisplay.textContent = score;
-    highScoreDisplay.textContent = highScore;
+    // Train collision if not sliding
+    if (trainActive && collides(trainX, 250, playerLeft, playerWidth)) {
+      if (!isSliding) {
+        gameOver();
+        return;
+      }
+    }
 
-    requestAnimationFrame(gameLoop);
+    // Enemy collision if close
+    if (collides(enemyX, 50, playerLeft, playerWidth) && playerBottom < 20) {
+      gameOver();
+      return;
+    }
+
+    updateScoreDisplay();
+    animationId = requestAnimationFrame(gameLoop);
   }
 
+  // Input handling
+  window.addEventListener('keydown', e => {
+    if (!isRunning) return;
+
+    if (e.code === 'ArrowUp' || e.code === 'Space') {
+      if (!isJumping && !isSliding) {
+        isJumping = true;
+        jumpVelocity = jumpHeight;
+      }
+    }
+    else if (e.code === 'ArrowDown') {
+      if (!isJumping) {
+        isSliding = true;
+        setTimeout(() => {
+          isSliding = false;
+        }, 600);
+      }
+    }
+    else if (e.code === 'ArrowLeft') {
+      if (playerLane > 0) {
+        playerLane--;
+        player.style.left = lanes[playerLane] + 'px';
+      }
+    }
+    else if (e.code === 'ArrowRight') {
+      if (playerLane < lanes.length -1) {
+        playerLane++;
+        player.style.left = lanes[playerLane] + 'px';
+      }
+    }
+    else if (e.code === 'KeyP') {
+      togglePause();
+    }
+  });
+
+  // Start game
   function startGame() {
-    isRunning = true;
-    isPaused = false;
-    startScreen.style.display = 'none';
+    startMenu.style.display = 'none';
+    pauseMenu.style.display = 'none';
+    resetPositions();
     score = 0;
+    level = 1;
     speed = 5;
     obstacleSpeed = speed;
     enemySpeed = speed * 0.8;
-    level = 1;
-    enemyX = -60;
-    obstacleX = window.innerWidth + 40;
-    powerupActive = false;
-    invincible = false;
-    powerupTimer = 0;
-    updateBackground();
-    gameLoop();
-    bgMusic.play();
+    trainSpeed = speed * 1.2;
+    isRunning = true;
+    isPaused = false;
+    animationId = requestAnimationFrame(gameLoop);
   }
 
-  function endGame() {
-    isRunning = false;
-    startScreen.style.display = 'flex';
-    message.textContent = `Game Over! Score: ${score} Level: ${level}`;
-    if (score > highScore) {
-      highScore = score;
-      localStorage.setItem('highScore', highScore);
-      message.textContent += ' - New High Score!';
+  // Pause/resume
+  function togglePause() {
+    if (!isRunning) return;
+    if (isPaused) {
+      isPaused = false;
+      pauseMenu.style.display = 'none';
+      animationId = requestAnimationFrame(gameLoop);
+    } else {
+      isPaused = true;
+      pauseMenu.style.display = 'flex';
+      pauseMenu.querySelector('div').textContent = "Game Paused";
     }
-    bgMusic.pause();
   }
 
-  function resetGame() {
+  // Restart
+  function restartGame() {
     score = 0;
-    speed = 5;
     level = 1;
-    enemyX = -60;
-    obstacleX = window.innerWidth + 40;
-    powerupActive = false;
-    invincible = false;
-    powerupTimer = 0;
-    updatePlayerStickman();
-    renderStickman(enemy, 0, true);
-    updateBackground();
+    speed = 5;
+    obstacleSpeed = speed;
+    enemySpeed = speed * 0.8;
+    trainSpeed = speed * 1.2;
+    resetPositions();
+    isPaused = false;
+    pauseMenu.style.display = 'none';
+    animationId = requestAnimationFrame(gameLoop);
   }
 
-  populateStickmanSelector();
+  // Quit to menu
+  function quitGame() {
+    isRunning = false;
+    isPaused = false;
+    pauseMenu.style.display = 'none';
+    startMenu.style.display = 'flex';
+    resetPositions();
+    scoreDisplay.textContent = '';
+  }
+
+  // Button events
+  startBtn.addEventListener('click', () => {
+    startGame();
+  });
+  resumeBtn.addEventListener('click', () => {
+    togglePause();
+  });
+  restartBtn.addEventListener('click', () => {
+    restartGame();
+  });
+  quitBtn.addEventListener('click', () => {
+    quitGame();
+  });
+
+  // Init player position
+  resetPositions();
 })();
 </script>
-
-<style>
-  /* Basic styles omitted for brevity */
-  #game {
-    position: relative;
-    width: 100vw;
-    height: 400px;
-    overflow: hidden;
-    background: linear-gradient(skyblue, green);
-  }
-  #player, #enemy {
-    position: absolute;
-    bottom: 0;
-    left: 50px;
-    width: 50px;
-    height: 80px;
-  }
-  #enemy {
-    left: -60px;
-  }
-  #obstacle {
-    position: absolute;
-    bottom: 0;
-    width: 40px;
-    height: 40px;
-    background-color: brown;
-    border-radius: 10px;
-  }
-  .stickman {
-    width: 50px;
-    height: 80px;
-  }
-  #stickmanSelector {
-    margin-top: 10px;
-    display: flex;
-    gap: 10px;
-  }
-  .stickman-option {
-    border: 2px solid transparent;
-    padding: 2px;
-  }
-  .stickman-option.selected {
-    border-color: blue;
-  }
-
-  @keyframes rainbowBG {
-    0%{background-position:0% 50%}
-    50%{background-position:100% 50%}
-    100%{background-position:0% 50%}
-  }
-</style>
+</body>
+</html>
