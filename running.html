@@ -165,7 +165,7 @@
   let level = 1;
   let speed = 5;
   let obstacleSpeed = speed;
-  let enemySpeed = speed * 0.8;
+  let enemySpeed = 2; // Fixed normal walking speed for enemy
   let trainSpeed = speed * 1.2;
   let enemyX = -60;
   let obstacleX = window.innerWidth + 40;
@@ -243,6 +243,7 @@
     let beatInterval = setInterval(() => {
       if (beatCount >= 6) {
         clearInterval(beatInterval);
+        enemy.style.transform = 'translateX(0) rotate(0)';
         return;
       }
       enemy.style.transform = beatCount % 2 === 0 ? 'translateX(10px) rotate(10deg)' : 'translateX(-10px) rotate(-10deg)';
@@ -266,7 +267,7 @@
         level++;
         speed += 0.5;
         obstacleSpeed = speed;
-        enemySpeed = speed * 0.8;
+        // enemySpeed stays fixed at 2, not increasing
         trainSpeed = speed * 1.2;
       }
       if (score % 15 === 0) {
@@ -380,7 +381,7 @@
     level = 1;
     speed = 5;
     obstacleSpeed = speed;
-    enemySpeed = speed * 0.8;
+    enemySpeed = 2; // fixed speed
     trainSpeed = speed * 1.2;
     isRunning = true;
     isPaused = false;
@@ -407,7 +408,7 @@
     level = 1;
     speed = 5;
     obstacleSpeed = speed;
-    enemySpeed = speed * 0.8;
+    enemySpeed = 2; // fixed speed
     trainSpeed = speed * 1.2;
     resetPositions();
     isPaused = false;
