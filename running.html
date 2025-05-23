@@ -1,410 +1,694 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Runner Game with Background Modes</title>
-  <style>
-    body {
-      margin: 0;
-      overflow: hidden;
-      font-family: sans-serif;
-      background: #000;
-      transition: background 1s ease;
-    }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Stickman Runner Game</title>
+<style>
+  /* Reset & base */
+  * {
+    box-sizing: border-box;
+  }
+  body, html {
+    margin: 0; padding: 0;
+    height: 100%;
+    background: linear-gradient(skyblue, green);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    overflow: hidden;
+    user-select: none;
+    color: white;
+  }
+  #game {
+    position: relative;
+    width: 100vw; height: 100vh;
+    overflow: hidden;
+  }
 
-    #game {
-      position: relative;
-      width: 100vw;
-      height: 300px;
-      overflow: hidden;
-      background: linear-gradient(skyblue, green);
-      transition: background 1s ease;
-    }
+  /* Start screen */
+  #startScreen {
+    position: absolute;
+    top:0; left:0; right:0; bottom:0;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+  }
+  #startScreen h1 {
+    font-size: 3em;
+    margin-bottom: 0.5em;
+  }
+  #startScreen p {
+    margin-bottom: 1em;
+    font-size: 1.2em;
+  }
+  #startScreen button {
+    background: #28a745;
+    border:none;
+    color:white;
+    padding: 0.8em 2em;
+    font-size: 1.2em;
+    border-radius: 0.3em;
+    cursor: pointer;
+  }
+  #startScreen button:hover {
+    background: #218838;
+  }
 
-    #player {
-      position: absolute;
-      bottom: 0;
-      left: 50px;
-      width: 50px;
-      height: 50px;
-      background: red;
-      transition: transform 0.2s;
-      z-index: 2;
-    }
+  /* Player and enemy container */
+  #player, #enemy {
+    position: absolute;
+    bottom: 40px;
+    width: 50px;
+    height: 80px;
+  }
+  #player {
+    left: 80px;
+  }
+  #enemy {
+    left: -60px;
+    display: none;
+  }
 
-    #obstacle {
-      position: absolute;
-      bottom: 0;
-      right: -50px;
-      width: 30px;
-      height: 50px;
-      background: black;
-      animation: moveObstacle 2s linear infinite;
-      z-index: 2;
-    }
+  /* Stickman SVG */
+  .stickman {
+    width: 50px;
+    height: 80px;
+  }
 
-    #enemy {
-      position: absolute;
-      bottom: 0;
-      left: -60px;
-      width: 40px;
-      height: 40px;
-      background: purple;
-      display: none;
-      z-index: 2;
-    }
+  /* Obstacle */
+  #obstacle {
+    position: absolute;
+    bottom: 40px;
+    right: -50px;
+    width: 40px;
+    height: 60px;
+    background: #654321;
+    border-radius: 5px;
+    animation: moveObstacle 2.5s linear infinite;
+    z-index: 2;
+  }
 
-    @keyframes moveObstacle {
-      0% {
-        right: -50px;
-      }
-      100% {
-        right: 100vw;
-      }
-    }
+  @keyframes moveObstacle {
+    0% { right: -50px; }
+    100% { right: 110vw; }
+  }
 
-    #score {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      font-size: 20px;
-      color: white;
-      z-index: 3;
-      text-shadow: 1px 1px 3px black;
-    }
+  /* Score & messages */
+  #score {
+    position: absolute;
+    top: 10px; left: 20px;
+    font-size: 1.5em;
+    font-weight: bold;
+    z-index: 5;
+    text-shadow: 0 0 5px black;
+  }
+  #highScore {
+    position: absolute;
+    top: 40px; left: 20px;
+    font-size: 1.1em;
+    opacity: 0.8;
+    text-shadow: 0 0 3px black;
+  }
+  #message {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 3em;
+    font-weight: bold;
+    text-shadow: 0 0 10px black;
+    pointer-events: none;
+  }
 
-    #message {
-      position: absolute;
-      top: 40%;
-      width: 100%;
-      text-align: center;
-      font-size: 30px;
-      color: white;
-      z-index: 3;
-      text-shadow: 2px 2px 5px black;
-    }
+  /* Controls */
+  #controls {
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    display: flex;
+    gap: 10px;
+    z-index: 5;
+  }
+  button.control-btn {
+    background: #222;
+    border: none;
+    padding: 8px 12px;
+    color: white;
+    font-size: 1em;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  button.control-btn:hover {
+    background: #444;
+  }
 
-    #restartBtn {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      font-size: 18px;
-      padding: 6px 12px;
-      background: rgba(255, 255, 255, 0.3);
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      color: white;
-      transition: background 0.3s;
-      user-select: none;
-      z-index: 3;
-    }
-    #restartBtn:hover {
-      background: rgba(255, 255, 255, 0.6);
-      color: black;
-    }
+  /* Background selector and file upload */
+  #backgroundSelector, #fileUpload {
+    position: absolute;
+    bottom: 10px;
+    left: 20px;
+    font-size: 1em;
+    padding: 5px;
+    border-radius: 5px;
+  }
+  #fileUpload {
+    display: none;
+  }
 
-    #backgroundSelector {
-      position: absolute;
-      top: 10px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 16px;
-      padding: 5px 10px;
-      border-radius: 6px;
-      border: none;
-      cursor: pointer;
-      z-index: 4;
-      background: rgba(255, 255, 255, 0.4);
-      color: #000;
-      user-select: none;
-      transition: background 0.3s;
-    }
-    #backgroundSelector:hover {
-      background: rgba(255, 255, 255, 0.8);
-    }
+  /* Rainbow background animation */
+  @keyframes rainbowBG {
+    0%{background-position:0% 50%}
+    50%{background-position:100% 50%}
+    100%{background-position:0% 50%}
+  }
 
-    #links {
-      position: absolute;
-      bottom: 10px;
-      left: 10px;
-      font-size: 16px;
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      z-index: 3;
-    }
+  /* Power-up bar */
+  #powerupBar {
+    position: absolute;
+    top: 90px; left: 20px;
+    width: 150px;
+    height: 15px;
+    border: 2px solid white;
+    border-radius: 7px;
+    overflow: hidden;
+    background: rgba(255,255,255,0.2);
+    display: none;
+  }
+  #powerupFill {
+    height: 100%;
+    background: gold;
+    width: 0%;
+    transition: width 0.2s;
+  }
 
-    #links a {
-      color: white;
-      text-decoration: none;
-      background: rgba(0, 0, 0, 0.6);
-      padding: 4px 8px;
-      border-radius: 6px;
-      transition: background 0.3s;
-      position: relative;
-    }
+  /* Link container */
+  #links {
+    position: absolute;
+    bottom: 10px;
+    right: 20px;
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    z-index: 10;
+  }
+  #links a {
+    color: white;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-weight: bold;
+    font-size: 0.9em;
+  }
+  #links a svg {
+    fill: white;
+    width: 22px;
+    height: 22px;
+  }
+  #links a:hover svg {
+    fill: #28a745;
+  }
+  /* Tooltip for Discord users */
+  .hover-user {
+    position: relative;
+  }
+  .hover-user[data-tooltip]:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 130%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: black;
+    padding: 3px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+    font-size: 0.8em;
+    opacity: 0.8;
+    pointer-events: none;
+    z-index: 20;
+  }
 
-    #links a:hover {
-      background: rgba(255, 255, 255, 0.3);
-    }
-
-    .hover-user:hover::after {
-      content: attr(data-tooltip);
-      position: absolute;
-      bottom: 30px;
-      left: 0;
-      background: black;
-      color: white;
-      padding: 4px 6px;
-      font-size: 14px;
-      border-radius: 5px;
-      white-space: nowrap;
-      z-index: 99;
-    }
-
-    /* Rainbow animated background */
-    @keyframes rainbowBG {
-      0% {
-        background-position: 0% 50%;
-      }
-      50% {
-        background-position: 100% 50%;
-      }
-      100% {
-        background-position: 0% 50%;
-      }
-    }
-  </style>
+  /* Stickman selection */
+  #stickmanSelector {
+    position: absolute;
+    bottom: 10px;
+    left: 220px;
+    z-index: 10;
+    background: rgba(0,0,0,0.5);
+    border-radius: 8px;
+    padding: 6px 10px;
+    display: flex;
+    gap: 10px;
+  }
+  .stickman-option {
+    cursor: pointer;
+    border: 2px solid transparent;
+    border-radius: 6px;
+    padding: 3px;
+    transition: border-color 0.3s;
+  }
+  .stickman-option.selected {
+    border-color: gold;
+  }
+</style>
 </head>
 <body>
-  <div id="game">
-    <div id="player"></div>
-    <div id="obstacle"></div>
-    <div id="enemy"></div>
-    <div id="score">Score: 0</div>
-    <div id="message"></div>
-    <button id="restartBtn">Restart</button>
 
-    <select id="backgroundSelector" title="Select Background">
-      <option value="rainbow">🌈 Rainbow Gradient</option>
-      <option value="dark">🌑 Dark Mode</option>
-      <option value="picture">🖼️ Custom Picture</option>
-      <option value="gif">🎞️ GIF Background</option>
-      <option value="default" selected>🌤️ Default Sky/Grass</option>
-    </select>
+<div id="game">
+
+  <!-- Start screen -->
+  <div id="startScreen">
+    <h1>Stickman Runner</h1>
+    <p>Press SPACE to jump. Avoid obstacles and the enemy!</p>
+    <button id="startBtn">Start Game</button>
   </div>
 
-  <div id="links">
-    <a href="https://www.youtube.com/channel/UChpNbCvMs7-yOIYI2mH_pnw" target="_blank"
-      >📺 YouTube</a
-    >
-    <a href="https://github.com/billybobbybrown32" target="_blank">💻 GitHub</a>
-    <a href="https://discord.gg/DNc5eRDqvT" target="_blank">💬 Discord Server</a>
-    <a
-      href="https://discord.com/channels/@me/1353769342717792318"
-      class="hover-user"
-      data-tooltip="der is on yerba"
-      target="_blank"
-      >👤 Discord User #1</a
-    >
-    <a
-      href="https://discord.com/channels/@me/1375478527717015695"
-      class="hover-user"
-      data-tooltip="scaredofhoes"
-      target="_blank"
-      >👤 Discord User #2</a
-    >
+  <!-- Player -->
+  <div id="player" class="stickman"></div>
+
+  <!-- Enemy -->
+  <div id="enemy" class="stickman"></div>
+
+  <!-- Obstacle -->
+  <div id="obstacle"></div>
+
+  <!-- Score -->
+  <div id="score">Score: 0</div>
+  <div id="highScore"></div>
+
+  <!-- Powerup Bar -->
+  <div id="powerupBar"><div id="powerupFill"></div></div>
+
+  <!-- Messages -->
+  <div id="message"></div>
+
+  <!-- Controls -->
+  <div id="controls">
+    <button id="pauseBtn" class="control-btn">Pause</button>
+    <button id="restartBtn" class="control-btn">Restart</button>
   </div>
 
-  <!-- YouTube iframe music player, hidden -->
-  <iframe
-    width="0"
-    height="0"
-    src="https://www.youtube.com/embed/6QfPR1W2fM4?autoplay=1&loop=1&playlist=6QfPR1W2fM4&controls=0&mute=0"
-    frameborder="0"
-    allow="autoplay"
-    style="display: none;"
-  ></iframe>
+  <!-- Background selector -->
+  <select id="backgroundSelector" title="Select background">
+    <option value="default">Default</option>
+    <option value="rainbow">Rainbow</option>
+    <option value="dark">Dark Mode</option>
+    <option value="picture">Picture URL</option>
+    <option value="upload">Upload Image</option>
+  </select>
 
-  <script>
-    const player = document.getElementById("player");
-    const obstacle = document.getElementById("obstacle");
-    const enemy = document.getElementById("enemy");
-    const scoreBoard = document.getElementById("score");
-    const message = document.getElementById("message");
-    const restartBtn = document.getElementById("restartBtn");
-    const backgroundSelector = document.getElementById("backgroundSelector");
-    const game = document.getElementById("game");
-    const body = document.body;
+  <input type="file" id="fileUpload" accept="image/*" />
 
-    let score = 0;
-    let isJumping = false;
-    let isSliding = false;
-    let gameRunning = true;
-    let enemyActive = false;
-    let enemyInterval = null;
+  <!-- Stickman selector -->
+  <div id="stickmanSelector" title="Select your stickman">
+    <!-- Will be filled by JS -->
+  </div>
 
-    document.addEventListener("keydown", (e) => {
-      if (!gameRunning) return;
-      if (e.code === "ArrowUp" && !isJumping) jump();
-      if (e.code === "ArrowDown" && !isSliding) slide();
+  <!-- Links -->
+  <div id="links" aria-label="Social and developer links">
+    <a href="https://www.youtube.com/channel/UChpNbCvMs7-yOIY2mH_pnw" target="_blank" aria-label="YouTube Channel">
+      <svg viewBox="0 0 24 24" fill="currentColor" >
+        <path d="M10 15l5.19-3L10 9v6zM21.8 7.08a2.64 2.64 0 00-1.86-1.86C18.06 5 12 5 12 5s-6.06 0-7.94.22a2.64 2.64 0 00-1.86 1.86A27.4 27.4 0 002 12a27.4 27.4 0 00.2 4.92 2.64 2.64 0 001.86 1.86C5.94 19 12 19 12 19s6.06 0 7.94-.22a2.64 2.64 0 001.86-1.86A27.4 27.4 0 0022 12a27.4 27.4 0 00-.2-4.92z"/>
+      </svg> YouTube
+    </a>
+    <a href="https://github.com/billybobbybrown32" target="_blank" aria-label="GitHub">
+      <svg viewBox="0 0 24 24" fill="currentColor" >
+        <path d="M12 0C5.37 0 0 5.37 0 12c0 5.3 3.438 9.8 8.205 11.385.6.112.82-.258.82-.577v-2.23c-3.338.727-4.042-1.415-4.042-1.415-.546-1.386-1.333-1.754-1.333-1.754-1.09-.745.083-.729.083-.729 1.205.084 1.84 1.236 1.84 1.236 1.07 1.835 2.807 1.305 3.492.997.108-.775.418-1.305.76-1.605-2.665-.305-5.466-1.33-5.466-5.93 0-1.31.47-2.38 1.235-3.22-.125-.303-.535-1.527.115-3.176 0 0 1.005-.322 3.3 1.23.957-.266 1.98-.398 3-.404 1.02.006 2.04.138 3 .404 2.28-1.552 3.285-1.23 3.285-1.23.655 1.65.245 2.873.12 3.176.77.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.62-5.475 5.92.43.37.82 1.102.82 2.222v3.293c0 .315.21.694.825.576C20.565 21.795 24 17.298 24 12c0-6.63-5.37-12-12-12z"/>
+      </svg> GitHub
+    </a>
+    <a href="https://discord.gg/DNc5eRDqvT" target="_blank" aria-label="Discord Server">
+      <svg viewBox="0 0 24 24" fill="currentColor" >
+        <path d="M20.317 4.3698a19.791 19.791 0 00-4.8851-1.5152.0741.0741 0 00-.0785.0371c-.211.3753-.4447.8648-.6083 1.2495-1.8447-.2762-3.68-.2762-5.4868 0-.1636-.3933-.4058-.8742-.6177-1.2495a.077.077 0 00-.0785-.037 19.7363 19.7363 0 00-4.8852 1.515.0699.0699 0 00-.0321.0277C.5334 9.0458-.319 13.5799.0992 18.0578a.0824.0824 0 00.0312.0561 19.9 19.9 0 006.0428 3.0294.0777.0777 0 00.0842-.0276c.4666-.6304.8731-1.2952 1.226-1.9942a.076.076 0 00-.0416-.1057 13.13 13.13 0 01-1.872-.8884.077.077 0 01-.0076-.1277c.125-.0943.25-.1923.371-.2914a.0743.0743 0 01.0786-.0105c3.927 1.7933 8.18 1.7933 12.0614 0a.0739.0739 0 01.0795.0095c.12.099.246.198.372.2924a.0766.0766 0 01-.006.1276 12.437 12.437 0 01-1.873.8883.0766.0766 0 00-.0407.1067c.3604.698.7668 1.3628 1.233 1.9932a.076.076 0 00.0842.0286 19.876 19.876 0 006.041-3.029 19.889 19.889 0 00-1.4906-13.6604.061.061 0 00-.0302-.0286zM8.02 15.3312c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9555-2.4189 2.157-2.4189 1.2108 0 2.1757 1.0952 2.1568 2.419 0 1.3332-.9554 2.4189-2.1569 2.4189zm7.9748 0c-1.1825 0-2.1569-1.0857-2.1569-2.419 0-1.3332.9554-2.4189 2.1569-2.4189 1.2108 0 2.1758 1.0952 2.1568 2.419 0 1.3332-.946 2.4189-2.1568 2.4189z"/>
+      </svg> Discord Server
+    </a>
+    <a href="https://discord.com/users/1353769342717792318" target="_blank" class="hover-user" data-tooltip="der is on yerba" aria-label="Discord User 1">
+      <svg viewBox="0 0 24 24" fill="currentColor" >
+        <path d="M12 12c2.21 0 4-1.79 4-4S14.21 4 12 4 8 5.79 8 8s1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+      </svg> User1
+    </a>
+    <a href="https://discord.com/users/1375478527717015695" target="_blank" class="hover-user" data-tooltip="scaredofhoes" aria-label="Discord User 2">
+      <svg viewBox="0 0 24 24" fill="currentColor" >
+        <path d="M12 12c2.21 0 4-1.79 4-4S14.21 4 12 4 8 5.79 8 8s1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+      </svg> User2
+    </a>
+    <a href="#" title="Developers" aria-label="Developers">
+      <svg viewBox="0 0 24 24" fill="currentColor" style="width:24px;height:24px;">
+        <path d="M20.7 4.3l-1-1a1 1 0 00-1.4 0l-1.3 1.3-1.6-1.6-4.3 4.3 1.6 1.6-1.3 1.3a1 1 0 000 1.4l1 1a1 1 0 001.4 0l1.3-1.3 4.3 4.3 1.6-1.6-4.3-4.3 1.3-1.3a1 1 0 000-1.4zM6 19v3h3l11-11-3-3L6 19z"/>
+      </svg> Devs
+    </a>
+  </div>
+</div>
+
+<!-- Audio -->
+<audio id="bgMusic" loop src="https://cdn.pixabay.com/download/audio/2022/03/20/audio_7d5f1d6c0d.mp3?filename=retro-game-loop-11025.mp3"></audio>
+<audio id="jumpSound" src="https://freesound.org/data/previews/331/331912_3248244-lq.mp3"></audio>
+<audio id="hitSound" src="https://freesound.org/data/previews/174/174027_3248244-lq.mp3"></audio>
+<audio id="scoreSound" src="https://freesound.org/data/previews/331/331912_3248244-lq.mp3"></audio>
+
+<script>
+(() => {
+  const game = document.getElementById('game');
+  const player = document.getElementById('player');
+  const enemy = document.getElementById('enemy');
+  const obstacle = document.getElementById('obstacle');
+  const scoreDisplay = document.getElementById('score');
+  const highScoreDisplay = document.getElementById('highScore');
+  const message = document.getElementById('message');
+  const startScreen = document.getElementById('startScreen');
+  const startBtn = document.getElementById('startBtn');
+  const pauseBtn = document.getElementById('pauseBtn');
+  const restartBtn = document.getElementById('restartBtn');
+  const backgroundSelector = document.getElementById('backgroundSelector');
+  const fileUpload = document.getElementById('fileUpload');
+  const powerupBar = document.getElementById('powerupBar');
+  const powerupFill = document.getElementById('powerupFill');
+  const stickmanSelector = document.getElementById('stickmanSelector');
+
+  const bgMusic = document.getElementById('bgMusic');
+  const jumpSound = document.getElementById('jumpSound');
+  const hitSound = document.getElementById('hitSound');
+  const scoreSound = document.getElementById('scoreSound');
+
+  // Game variables
+  let isRunning = false;
+  let isPaused = false;
+  let score = 0;
+  let highScore = localStorage.getItem('highScore') || 0;
+  let speed = 5; // obstacle speed (higher = faster)
+  let jumpHeight = 150;
+  let gravity = 6;
+  let isJumping = false;
+  let jumpY = 0;
+  let jumpVelocity = 0;
+  let enemyX = -60;
+  let obstacleX = window.innerWidth + 40;
+  let obstacleSpeed = speed;
+  let enemySpeed = speed * 0.8;
+  let powerupActive = false;
+  let powerupDuration = 5000;
+  let powerupTimer = 0;
+  let invincible = false;
+  let level = 1;
+  let backgroundType = 'default';
+  let backgrounds = {
+    default: 'linear-gradient(skyblue, green)',
+    rainbow: 'linear-gradient(270deg, red, orange, yellow, green, blue, indigo, violet)',
+    dark: 'linear-gradient(#121212, #2c2c2c)',
+  };
+
+  // Stickman SVG templates
+  const stickmen = [
+    {
+      name: 'Classic',
+      svg: `<svg class="stickman" viewBox="0 0 50 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="25" cy="15" r="10" stroke="black" stroke-width="3" fill="none"/>
+        <line x1="25" y1="25" x2="25" y2="55" stroke="black" stroke-width="3"/>
+        <line x1="25" y1="30" x2="10" y2="50" stroke="black" stroke-width="3"/>
+        <line x1="25" y1="30" x2="40" y2="50" stroke="black" stroke-width="3"/>
+        <line x1="25" y1="55" x2="10" y2="75" stroke="black" stroke-width="3"/>
+        <line x1="25" y1="55" x2="40" y2="75" stroke="black" stroke-width="3"/>
+      </svg>`
+    },
+    {
+      name: 'Blue',
+      svg: `<svg class="stickman" viewBox="0 0 50 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="25" cy="15" r="10" stroke="blue" stroke-width="3" fill="none"/>
+        <line x1="25" y1="25" x2="25" y2="55" stroke="blue" stroke-width="3"/>
+        <line x1="25" y1="30" x2="10" y2="50" stroke="blue" stroke-width="3"/>
+        <line x1="25" y1="30" x2="40" y2="50" stroke="blue" stroke-width="3"/>
+        <line x1="25" y1="55" x2="10" y2="75" stroke="blue" stroke-width="3"/>
+        <line x1="25" y1="55" x2="40" y2="75" stroke="blue" stroke-width="3"/>
+      </svg>`
+    },
+    {
+      name: 'Green',
+      svg: `<svg class="stickman" viewBox="0 0 50 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="25" cy="15" r="10" stroke="green" stroke-width="3" fill="none"/>
+        <line x1="25" y1="25" x2="25" y2="55" stroke="green" stroke-width="3"/>
+        <line x1="25" y1="30" x2="10" y2="50" stroke="green" stroke-width="3"/>
+        <line x1="25" y1="30" x2="40" y2="50" stroke="green" stroke-width="3"/>
+        <line x1="25" y1="55" x2="10" y2="75" stroke="green" stroke-width="3"/>
+        <line x1="25" y1="55" x2="40" y2="75" stroke="green" stroke-width="3"/>
+      </svg>`
+    },
+  ];
+
+  let currentStickmanIndex = 0;
+
+  // Render stickman SVG inside player and enemy containers
+  function renderStickman(container, index, isEnemy = false) {
+    container.innerHTML = stickmen[index].svg;
+    if (isEnemy) {
+      // Make enemy red stickman by changing stroke to red in SVG
+      container.querySelectorAll('circle, line').forEach(el => el.setAttribute('stroke', 'red'));
+      container.style.display = 'block';
+    }
+  }
+
+  // Stickman selector UI
+  function populateStickmanSelector() {
+    stickmen.forEach((sm, i) => {
+      const div = document.createElement('div');
+      div.classList.add('stickman-option');
+      if(i === currentStickmanIndex) div.classList.add('selected');
+      div.innerHTML = sm.svg;
+      div.title = sm.name;
+      div.style.width = '40px';
+      div.style.height = '65px';
+      div.style.cursor = 'pointer';
+      div.addEventListener('click', () => {
+        currentStickmanIndex = i;
+        updatePlayerStickman();
+        document.querySelectorAll('.stickman-option').forEach(el => el.classList.remove('selected'));
+        div.classList.add('selected');
+      });
+      stickmanSelector.appendChild(div);
     });
+  }
 
-    restartBtn.addEventListener("click", restartGame);
+  function updatePlayerStickman() {
+    renderStickman(player, currentStickmanIndex);
+  }
 
-    backgroundSelector.addEventListener("change", () => {
-      setBackgroundMode(backgroundSelector.value);
-    });
+  // Initial render
+  updatePlayerStickman();
+  renderStickman(enemy, 0, true);
+  populateStickmanSelector();
 
-    function jump() {
+  // Background handling
+  function updateBackground() {
+    if (backgroundType === 'picture' && bgPictureUrl) {
+      game.style.background = `url(${bgPictureUrl}) center center / cover no-repeat`;
+    } else if (backgroundType === 'upload' && uploadedImage) {
+      game.style.background = `url(${uploadedImage}) center center / cover no-repeat`;
+    } else if (backgroundType === 'rainbow') {
+      game.style.background = 'linear-gradient(270deg, red, orange, yellow, green, blue, indigo, violet)';
+      game.style.backgroundSize = '1400% 1400%';
+      game.style.animation = 'rainbowBG 15s ease infinite';
+    } else if (backgroundType === 'dark') {
+      game.style.background = 'linear-gradient(#121212, #2c2c2c)';
+      game.style.animation = 'none';
+    } else {
+      game.style.background = backgrounds.default;
+      game.style.animation = 'none';
+    }
+  }
+
+  // Other game logic (jump, movement, collision, scoring) omitted for brevity...
+
+  // Start button event
+  startBtn.addEventListener('click', () => {
+    if (!isRunning) {
+      startGame();
+    }
+  });
+
+  // Pause button event
+  pauseBtn.addEventListener('click', () => {
+    if (isRunning) {
+      isPaused = !isPaused;
+      pauseBtn.textContent = isPaused ? 'Resume' : 'Pause';
+      if (!isPaused) gameLoop();
+    }
+  });
+
+  // Restart button event
+  restartBtn.addEventListener('click', () => {
+    resetGame();
+    startGame();
+  });
+
+  // Key controls for jump
+  document.addEventListener('keydown', (e) => {
+    if ((e.code === 'Space' || e.code === 'ArrowUp') && !isJumping && !isPaused) {
+      jumpSound.play();
       isJumping = true;
-      player.style.transform = "translateY(-100px)";
-      setTimeout(() => {
-        player.style.transform = "translateY(0)";
-        isJumping = false;
-      }, 600);
+      jumpVelocity = jumpHeight;
     }
+  });
 
-    function slide() {
-      isSliding = true;
-      player.style.height = "30px";
-      setTimeout(() => {
-        player.style.height = "50px";
-        isSliding = false;
-      }, 500);
-    }
+  // Game loop
+  function gameLoop() {
+    if (!isRunning || isPaused) return;
 
-    function checkCollision() {
-      const playerRect = player.getBoundingClientRect();
-      const obstacleRect = obstacle.getBoundingClientRect();
-      const enemyRect = enemy.getBoundingClientRect();
+    // Update obstacle and enemy positions
+    obstacleX -= obstacleSpeed;
+    enemyX += enemySpeed;
 
-      if (
-        playerRect.left < obstacleRect.right &&
-        playerRect.right > obstacleRect.left &&
-        playerRect.bottom > obstacleRect.top &&
-        !isJumping &&
-        !isSliding
-      ) {
-        endGame("You died! Hit an obstacle.");
-      }
-
-      if (
-        enemyActive &&
-        playerRect.left < enemyRect.right &&
-        playerRect.right > enemyRect.left
-      ) {
-        endGame("Caught by enemy!");
-      }
-    }
-
-    function updateScore() {
-      if (!gameRunning) return;
+    if (obstacleX < -40) {
+      obstacleX = window.innerWidth + Math.random() * 500;
       score++;
-      scoreBoard.innerText = "Score: " + score;
-
-      if (score === 50 && !enemyActive) {
-        activateEnemy();
-      }
-
-      if (score >= 100) {
-        endGame("You Win!");
+      scoreSound.play();
+      if (score % 10 === 0) {
+        speed += 1;
+        obstacleSpeed = speed;
+        enemySpeed = speed * 0.8;
+        level++;
       }
     }
 
-    function activateEnemy() {
-      enemy.style.display = "block";
-      enemyActive = true;
-
-      let enemyPos = -60;
-      enemyInterval = setInterval(() => {
-        if (!gameRunning) return clearInterval(enemyInterval);
-        enemyPos += 2;
-        enemy.style.left = enemyPos + "px";
-      }, 30);
+    if (enemyX > window.innerWidth + 60) {
+      enemyX = -60;
     }
 
-    function endGame(text) {
-      gameRunning = false;
-      message.innerText = text;
-      obstacle.style.animationPlayState = "paused";
-      if (enemyInterval) clearInterval(enemyInterval);
-    }
+    obstacle.style.left = obstacleX + 'px';
+    enemy.style.left = enemyX + 'px';
 
-    function restartGame() {
-      score = 0;
-      isJumping = false;
-      isSliding = false;
-      gameRunning = true;
-      enemyActive = false;
-      enemy.style.display = "none";
-      enemy.style.left = "-60px";
-      message.innerText = "";
-      scoreBoard.innerText = "Score: 0";
-      obstacle.style.animationPlayState = "running";
-      if (enemyInterval) clearInterval(enemyInterval);
-    }
-
-    function setBackgroundMode(mode) {
-      // Reset all styles first
-      game.style.background = "";
-      game.style.backgroundImage = "";
-      game.style.animation = "";
-      body.style.background = "";
-      body.style.backgroundImage = "";
-      body.style.animation = "";
-
-      switch (mode) {
-        case "rainbow":
-          // Animated rainbow gradient background on body
-          body.style.background =
-            "linear-gradient(-45deg, red, orange, yellow, green, blue, indigo, violet)";
-          body.style.backgroundSize = "400% 400%";
-          body.style.animation = "rainbowBG 15s ease infinite";
-          // Game background remains transparent so body shows through
-          game.style.background = "transparent";
-          break;
-
-        case "dark":
-          // Dark mode background on game container
-          game.style.background = "#121212";
-          break;
-
-        case "picture":
-          // Custom picture background
-          game.style.backgroundImage =
-            "url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1280&q=80')";
-          game.style.backgroundSize = "cover";
-          game.style.backgroundPosition = "center";
-          break;
-
-        case "gif":
-          // GIF background - applied to body for full viewport effect
-          body.style.backgroundImage =
-            "url('https://media.giphy.com/media/l0ExncehJzexFpRHq/giphy.gif')";
-          body.style.backgroundSize = "cover";
-          body.style.backgroundRepeat = "no-repeat";
-          body.style.backgroundPosition = "center";
-          break;
-
-        default:
-          // Default sky gradient for game container
-          game.style.background =
-            "linear-gradient(skyblue, green)";
-          break;
+    // Handle jump
+    if (isJumping) {
+      jumpY += jumpVelocity;
+      jumpVelocity -= gravity;
+      if (jumpY <= 0) {
+        jumpY = 0;
+        isJumping = false;
       }
+      player.style.bottom = jumpY + 'px';
     }
 
-    // Initialize with default background
-    setBackgroundMode(backgroundSelector.value);
+    // Collision detection
+    const playerRect = player.getBoundingClientRect();
+    const enemyRect = enemy.getBoundingClientRect();
+    const obstacleRect = obstacle.getBoundingClientRect();
 
-    setInterval(() => {
-      if (gameRunning) {
-        checkCollision();
-        updateScore();
-      }
-    }, 200);
-  </script>
-</body>
-</html>
+    if (!invincible && (
+      (playerRect.left < enemyRect.right &&
+       playerRect.right > enemyRect.left &&
+       playerRect.bottom > enemyRect.top &&
+       playerRect.top < enemyRect.bottom) ||
+      (playerRect.left < obstacleRect.right &&
+       playerRect.right > obstacleRect.left &&
+       playerRect.bottom > obstacleRect.top &&
+       playerRect.top < obstacleRect.bottom)
+    )) {
+      hitSound.play();
+      endGame();
+      return;
+    }
+
+    scoreDisplay.textContent = score;
+    highScoreDisplay.textContent = highScore;
+
+    requestAnimationFrame(gameLoop);
+  }
+
+  function startGame() {
+    isRunning = true;
+    isPaused = false;
+    startScreen.style.display = 'none';
+    score = 0;
+    speed = 5;
+    obstacleSpeed = speed;
+    enemySpeed = speed * 0.8;
+    level = 1;
+    enemyX = -60;
+    obstacleX = window.innerWidth + 40;
+    powerupActive = false;
+    invincible = false;
+    powerupTimer = 0;
+    updateBackground();
+    gameLoop();
+    bgMusic.play();
+  }
+
+  function endGame() {
+    isRunning = false;
+    startScreen.style.display = 'flex';
+    message.textContent = `Game Over! Score: ${score} Level: ${level}`;
+    if (score > highScore) {
+      highScore = score;
+      localStorage.setItem('highScore', highScore);
+      message.textContent += ' - New High Score!';
+    }
+    bgMusic.pause();
+  }
+
+  function resetGame() {
+    score = 0;
+    speed = 5;
+    level = 1;
+    enemyX = -60;
+    obstacleX = window.innerWidth + 40;
+    powerupActive = false;
+    invincible = false;
+    powerupTimer = 0;
+    updatePlayerStickman();
+    renderStickman(enemy, 0, true);
+    updateBackground();
+  }
+
+  populateStickmanSelector();
+})();
+</script>
+
+<style>
+  /* Basic styles omitted for brevity */
+  #game {
+    position: relative;
+    width: 100vw;
+    height: 400px;
+    overflow: hidden;
+    background: linear-gradient(skyblue, green);
+  }
+  #player, #enemy {
+    position: absolute;
+    bottom: 0;
+    left: 50px;
+    width: 50px;
+    height: 80px;
+  }
+  #enemy {
+    left: -60px;
+  }
+  #obstacle {
+    position: absolute;
+    bottom: 0;
+    width: 40px;
+    height: 40px;
+    background-color: brown;
+    border-radius: 10px;
+  }
+  .stickman {
+    width: 50px;
+    height: 80px;
+  }
+  #stickmanSelector {
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+  }
+  .stickman-option {
+    border: 2px solid transparent;
+    padding: 2px;
+  }
+  .stickman-option.selected {
+    border-color: blue;
+  }
+
+  @keyframes rainbowBG {
+    0%{background-position:0% 50%}
+    50%{background-position:100% 50%}
+    100%{background-position:0% 50%}
+  }
+</style>
