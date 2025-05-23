@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Runner Game with Background Modes</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: sans-serif;
+      background: #000;
+      transition: background 1s ease;
+    }
+
+    #game {
+      position: relative;
+      width: 100vw;
+      height: 300px;
+      overflow: hidden;
+      background: linear-gradient(skyblue, green);
+      transition: background 1s ease;
+    }
+
+    #player {
+      position: absolute;
+      bottom: 0;
+      left: 50px;
+      width: 50px;
+      height: 50px;
+      background: red;
+      transition: transform 0.2s;
+      z-index: 2;
+    }
+
+    #obstacle {
+      position: absolute;
+      bottom: 0;
+      right: -50px;
+      width: 30px;
+      height: 50px;
+      background: black;
+      animation: moveObstacle 2s linear infinite;
+      z-index: 2;
+    }
+
+    #enemy {
+      position: absolute;
+      bottom: 0;
+      left: -60px;
+      width: 40px;
+      height: 40px;
+      background: purple;
+      display: none;
+      z-index: 2;
+    }
+
+    @keyframes moveObstacle {
+      0% {
+        right: -50px;
+      }
+      100% {
+        right: 100vw;
+      }
+    }
+
+    #score {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      font-size: 20px;
+      color: white;
+      z-index: 3;
+      text-shadow: 1px 1px 3px black;
+    }
+
+    #message {
+      position: absolute;
+      top: 40%;
+      width: 100%;
+      text-align: center;
+      font-size: 30px;
+      color: white;
+      z-index: 3;
+      text-shadow: 2px 2px 5px black;
+    }
+
+    #restartBtn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 18px;
+      padding: 6px 12px;
+      background: rgba(255, 255, 255, 0.3);
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      color: white;
+      transition: background 0.3s;
+      user-select: none;
+      z-index: 3;
+    }
+    #restartBtn:hover {
+      background: rgba(255, 255, 255, 0.6);
+      color: black;
+    }
+
+    #backgroundSelector {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 16px;
+      padding: 5px 10px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      z-index: 4;
+      background: rgba(255, 255, 255, 0.4);
+      color: #000;
+      user-select: none;
+      transition: background 0.3s;
+    }
+    #backgroundSelector:hover {
+      background: rgba(255, 255, 255, 0.8);
+    }
+
+    #links {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      font-size: 16px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      z-index: 3;
+    }
+
+    #links a {
+      color: white;
+      text-decoration: none;
+      background: rgba(0, 0, 0, 0.6);
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: background 0.3s;
+      position: relative;
+    }
+
+    #links a:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .hover-user:hover::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 30px;
+      left: 0;
+      background: black;
+      color: white;
+      padding: 4px 6px;
+      font-size: 14px;
+      border-radius: 5px;
+      white-space: nowrap;
+      z-index: 99;
+    }
+
+    /* Rainbow animated background */
+    @keyframes rainbowBG {
+      0% {
+        background-position: 0% 50%;
+      }
+      50% {
+        background-position: 100% 50%;
+      }
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="game">
+    <div id="player"></div>
+    <div id="obstacle"></div>
+    <div id="enemy"></div>
+    <div id="score">Score: 0</div>
+    <div id="message"></div>
+    <button id="restartBtn">Restart</button>
+
+    <select id="backgroundSelector" title="Select Background">
+      <option value="rainbow">🌈 Rainbow Gradient</option>
+      <option value="dark">🌑 Dark Mode</option>
+      <option value="picture">🖼️ Custom Picture</option>
+      <option value="gif">🎞️ GIF Background</option>
+      <option value="default" selected>🌤️ Default Sky/Grass</option>
+    </select>
+  </div>
+
+  <div id="links">
+    <a href="https://www.youtube.com/channel/UChpNbCvMs7-yOIYI2mH_pnw" target="_blank"
+      >📺 YouTube</a
+    >
+    <a href="https://github.com/billybobbybrown32" target="_blank">💻 GitHub</a>
+    <a href="https://discord.gg/DNc5eRDqvT" target="_blank">💬 Discord Server</a>
+    <a
+      href="https://discord.com/channels/@me/1353769342717792318"
+      class="hover-user"
+      data-tooltip="der is on yerba"
+      target="_blank"
+      >👤 Discord User #1</a
+    >
+    <a
+      href="https://discord.com/channels/@me/1375478527717015695"
+      class="hover-user"
+      data-tooltip="scaredofhoes"
+      target="_blank"
+      >👤 Discord User #2</a
+    >
+  </div>
+
+  <!-- YouTube iframe music player, hidden -->
+  <iframe
+    width="0"
+    height="0"
+    src="https://www.youtube.com/embed/6QfPR1W2fM4?autoplay=1&loop=1&playlist=6QfPR1W2fM4&controls=0&mute=0"
+    frameborder="0"
+    allow="autoplay"
+    style="display: none;"
+  ></iframe>
+
+  <script>
+    const player = document.getElementById("player");
+    const obstacle = document.getElementById("obstacle");
+    const enemy = document.getElementById("enemy");
+    const scoreBoard = document.getElementById("score");
+    const message = document.getElementById("message");
+    const restartBtn = document.getElementById("restartBtn");
+    const backgroundSelector = document.getElementById("backgroundSelector");
+    const game = document.getElementById("game");
+    const body = document.body;
+
+    let score = 0;
+    let isJumping = false;
+    let isSliding = false;
+    let gameRunning = true;
+    let enemyActive = false;
+    let enemyInterval = null;
+
+    document.addEventListener("keydown", (e) => {
+      if (!gameRunning) return;
+      if (e.code === "ArrowUp" && !isJumping) jump();
+      if (e.code === "ArrowDown" && !isSliding) slide();
+    });
+
+    restartBtn.addEventListener("click", restartGame);
+
+    backgroundSelector.addEventListener("change", () => {
+      setBackgroundMode(backgroundSelector.value);
+    });
+
+    function jump() {
+      isJumping = true;
+      player.style.transform = "translateY(-100px)";
+      setTimeout(() => {
+        player.style.transform = "translateY(0)";
+        isJumping = false;
+      }, 600);
+    }
+
+    function slide() {
+      isSliding = true;
+      player.style.height = "30px";
+      setTimeout(() => {
+        player.style.height = "50px";
+        isSliding = false;
+      }, 500);
+    }
+
+    function checkCollision() {
+      const playerRect = player.getBoundingClientRect();
+      const obstacleRect = obstacle.getBoundingClientRect();
+      const enemyRect = enemy.getBoundingClientRect();
+
+      if (
+        playerRect.left < obstacleRect.right &&
+        playerRect.right > obstacleRect.left &&
+        playerRect.bottom > obstacleRect.top &&
+        !isJumping &&
+        !isSliding
+      ) {
+        endGame("You died! Hit an obstacle.");
+      }
+
+      if (
+        enemyActive &&
+        playerRect.left < enemyRect.right &&
+        playerRect.right > enemyRect.left
+      ) {
+        endGame("Caught by enemy!");
+      }
+    }
+
+    function updateScore() {
+      if (!gameRunning) return;
+      score++;
+      scoreBoard.innerText = "Score: " + score;
+
+      if (score === 50 && !enemyActive) {
+        activateEnemy();
+      }
+
+      if (score >= 100) {
+        endGame("You Win!");
+      }
+    }
+
+    function activateEnemy() {
+      enemy.style.display = "block";
+      enemyActive = true;
+
+      let enemyPos = -60;
+      enemyInterval = setInterval(() => {
+        if (!gameRunning) return clearInterval(enemyInterval);
+        enemyPos += 2;
+        enemy.style.left = enemyPos + "px";
+      }, 30);
+    }
+
+    function endGame(text) {
+      gameRunning = false;
+      message.innerText = text;
+      obstacle.style.animationPlayState = "paused";
+      if (enemyInterval) clearInterval(enemyInterval);
+    }
+
+    function restartGame() {
+      score = 0;
+      isJumping = false;
+      isSliding = false;
+      gameRunning = true;
+      enemyActive = false;
+      enemy.style.display = "none";
+      enemy.style.left = "-60px";
+      message.innerText = "";
+      scoreBoard.innerText = "Score: 0";
+      obstacle.style.animationPlayState = "running";
+      if (enemyInterval) clearInterval(enemyInterval);
+    }
+
+    function setBackgroundMode(mode) {
+      // Reset all styles first
+      game.style.background = "";
+      game.style.backgroundImage = "";
+      game.style.animation = "";
+      body.style.background = "";
+      body.style.backgroundImage = "";
+      body.style.animation = "";
+
+      switch (mode) {
+        case "rainbow":
+          // Animated rainbow gradient background on body
+          body.style.background =
+            "linear-gradient(-45deg, red, orange, yellow, green, blue, indigo, violet)";
+          body.style.backgroundSize = "400% 400%";
+          body.style.animation = "rainbowBG 15s ease infinite";
+          // Game background remains transparent so body shows through
+          game.style.background = "transparent";
+          break;
+
+        case "dark":
+          // Dark mode background on game container
+          game.style.background = "#121212";
+          break;
+
+        case "picture":
+          // Custom picture background
+          game.style.backgroundImage =
+            "url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1280&q=80')";
+          game.style.backgroundSize = "cover";
+          game.style.backgroundPosition = "center";
+          break;
+
+        case "gif":
+          // GIF background - applied to body for full viewport effect
+          body.style.backgroundImage =
+            "url('https://media.giphy.com/media/l0ExncehJzexFpRHq/giphy.gif')";
+          body.style.backgroundSize = "cover";
+          body.style.backgroundRepeat = "no-repeat";
+          body.style.backgroundPosition = "center";
+          break;
+
+        default:
+          // Default sky gradient for game container
+          game.style.background =
+            "linear-gradient(skyblue, green)";
+          break;
+      }
+    }
+
+    // Initialize with default background
+    setBackgroundMode(backgroundSelector.value);
+
+    setInterval(() => {
+      if (gameRunning) {
+        checkCollision();
+        updateScore();
+      }
+    }, 200);
+  </script>
+</body>
+</html>
